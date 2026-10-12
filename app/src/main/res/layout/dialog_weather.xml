@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        style="@style/TextSmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/weather_setup_description" />
+
+    <EditText
+        android:id="@+id/weatherApiKey"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/weather_api_key"
+        android:inputType="textPassword"
+        android:importantForAutofill="no"
+        android:saveEnabled="false"
+        android:singleLine="true" />
+
+    <EditText
+        android:id="@+id/weatherLatitude"
+        android:importantForAutofill="no"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/weather_latitude"
+        android:inputType="numberDecimal|numberSigned"
+        android:singleLine="true" />
+
+    <EditText
+        android:id="@+id/weatherLongitude"
+        android:importantForAutofill="no"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/weather_longitude"
+        android:inputType="numberDecimal|numberSigned"
+        android:singleLine="true" />
+
+    <TextView
+        style="@style/TextSmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/weather_attribution" />
+</LinearLayout>

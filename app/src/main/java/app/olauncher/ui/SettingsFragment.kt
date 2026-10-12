@@ -24,6 +24,8 @@ import app.olauncher.MainViewModel
 import app.olauncher.R
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.data.WeatherConfig
+import app.olauncher.databinding.DialogWeatherBinding
 import app.olauncher.databinding.DialogTextSizeBinding
 import app.olauncher.databinding.FragmentSettingsBinding
 import app.olauncher.helper.appUsagePermissionGranted
@@ -118,6 +120,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = false)
             R.id.textSizeValue -> showTextSizeDialog()
             R.id.boldFont -> toggleBoldFont()
+            R.id.weatherConfigure -> showWeatherDialog()
 
             R.id.swipeLeftApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_LEFT_APP)
             R.id.swipeRightApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_RIGHT_APP)
@@ -183,6 +186,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.appThemeText.setOnClickListener(this)
         binding.textSizeValue.setOnClickListener(this)
         binding.boldFont.setOnClickListener(this)
+        binding.weatherConfigure.setOnClickListener(this)
 
         binding.share.setOnClickListener(this)
         binding.rate.setOnClickListener(this)
@@ -276,6 +280,37 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         dialog?.dismiss()
         dialog = newDialog
         newDialog.showRespectingStatusBar()
+    }
+
+    private fun showWeatherDialog() {
+        val fields = DialogWeatherBinding.inflate(layoutInflater)
+        fields.weatherApiKey.setText(prefs.weatherApiKey)
+        fields.weatherLatitude.setText(prefs.weatherLatitude)
+        fields.weatherLongitude.setText(prefs.weatherLongitude)
+        val weatherDialog = AlertDialog.Builder(requireContext())
+            .setTitle(R.string.weather)
+            .setView(fields.root)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.okay, null)
+            .create()
+        showDialog(weatherDialog)
+        weatherDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val key = fields.weatherApiKey.text.toString().trim()
+            val latitude = fields.weatherLatitude.text.toString().trim()
+            val longitude = fields.weatherLongitude.text.toString().trim()
+            if (key.isNotEmpty() && WeatherConfig.parse(key, latitude, longitude) == null) {
+                when {
+                    WeatherConfig.parse("k", latitude, "0") == null ->
+                        fields.weatherLatitude.error = getString(R.string.weather_invalid_config)
+                    WeatherConfig.parse("k", "0", longitude) == null ->
+                        fields.weatherLongitude.error = getString(R.string.weather_invalid_config)
+                    else -> fields.weatherApiKey.error = getString(R.string.weather_invalid_config)
+                }
+            } else {
+                prefs.saveWeatherConfig(key, latitude, longitude)
+                weatherDialog.dismiss()
+            }
+        }
     }
 
     private fun showTextSizeDialog() {
