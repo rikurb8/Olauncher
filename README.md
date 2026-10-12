@@ -1,20 +1,20 @@
 ![Olauncher](https://repository-images.githubusercontent.com/278638069/db0acb80-661b-11eb-803e-926cae5dccb4)
 
 
-# Olauncher | Minimal AF Launcher
+# Olauncher | Minimal AF Launcher (personal slopfork)
+
+This is a **personal slopfork** of Olauncher, hacked together for my own needs and my own
+phone. It is not maintained, not tested beyond my daily driver, and not intended for anyone
+else. No APKs, no releases, no support.
+
+Everything here is the work of the original author, **[tanujnotes](https://github.com/tanujnotes)**:
+upstream source is at **[github.com/tanujnotes/Olauncher](https://github.com/tanujnotes/Olauncher)**.
+Get the real, supported launcher from **[Play Store](https://play.google.com/store/apps/details?id=app.olauncher)**,
+**[F-Droid](https://f-droid.org/packages/app.olauncher)**,
+**[IzzyOnDroid](https://apt.izzysoft.de/packages/app.olauncher)** or the
+**[latest upstream release](https://github.com/tanujnotes/Olauncher/releases/)**.
+
 AF stands for Ad-Free! :D
-
-[<img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
-    alt="Get it on Play Store"
-    height="80" align="middle">](https://play.google.com/store/apps/details?id=app.olauncher)
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-    alt="Get it on F-Droid"
-    height="80" align="middle">](https://f-droid.org/packages/app.olauncher)
-[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png"
-    alt="Get it on IzzyOnDroid"
-    height="54" hspace="13" align="middle">](https://apt.izzysoft.de/packages/app.olauncher)
-
-### Install using [Play Store](https://play.google.com/store/apps/details?id=app.olauncher), [F-Droid](https://f-droid.org/packages/app.olauncher), [IzzyOnDroid](https://apt.izzysoft.de/packages/app.olauncher) or the [latest APK](https://github.com/tanujnotes/Olauncher/releases/).
 
 - To maintain the simplicity of the launcher, a few niche features are available but hidden.
 
