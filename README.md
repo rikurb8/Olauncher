@@ -1,63 +1,7 @@
-![Olauncher](https://repository-images.githubusercontent.com/278638069/db0acb80-661b-11eb-803e-926cae5dccb4)
-
-
 # Olauncher | Minimal AF Launcher (personal slopfork)
 
-This is a **personal slopfork** of Olauncher, hacked together for my own needs and my own
-phone. It is not maintained, not tested beyond my daily driver, and not intended for anyone
-else. No APKs, no releases, no support.
-
-Everything here is the work of the original author, **[tanujnotes](https://github.com/tanujnotes)**:
-upstream source is at **[github.com/tanujnotes/Olauncher](https://github.com/tanujnotes/Olauncher)**.
-Get the real, supported launcher from **[Play Store](https://play.google.com/store/apps/details?id=app.olauncher)**,
-**[F-Droid](https://f-droid.org/packages/app.olauncher)**,
-**[IzzyOnDroid](https://apt.izzysoft.de/packages/app.olauncher)** or the
-**[latest upstream release](https://github.com/tanujnotes/Olauncher/releases/)**.
-
-AF stands for Ad-Free! :D
-
-- To maintain the simplicity of the launcher, a few niche features are available but hidden.
-
-- Please check out the **[About](https://tanujnotes.substack.com/p/olauncher-minimal-af-launcher?utm_source=github)** page in the Olauncher settings for a complete list of features and **FAQs**.
-
-### Weather
-
-In Settings → Home screen → Weather, select **Configure weather** and enter a
-[weather.goodrnd.xyz](https://weather.goodrnd.xyz/docs) API key, latitude, and
-longitude (decimal degrees). The right-side display shows a Material weather icon, temperature in °C,
-rainfall in mm/h, and rain advice. It refreshes every two hours while the home
-screen is visible and hides expired advice. Long-press the widget to refresh
-immediately and restart the two-hour timer. Clear the key to disable it.
-
-Only the configured coordinates are sent to the weather service; no location
-permission is needed. The key is stored in app-private preferences, excluded
-from backup, and sent over HTTPS in the Authorization header. Weather text
-currently uses English; data is provided by FMI and MET Norway (CC BY 4.0).
-Weather icons are Google Material Symbols (Apache 2.0); see
-[third_party/material-symbols](third_party/material-symbols).
-
-##
+A **personal slopfork** of [Olauncher](https://github.com/tanujnotes/Olauncher), hacked up for
+my needs. Unmaintained, no releases, no support — get the real launcher from
+[upstream](https://github.com/tanujnotes/Olauncher).
 
 License: [GNU GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html)
-
-Contact: [X/Twitter](https://x.com/tanujnotes) • [Reddit](https://reddit.com/user/tanujnotes/) • [Bluesky](https://bsky.app/profile/tanujnotes.bsky.social)
-
-##
-
-### My other apps:
-
-- [Pro Launcher](https://play.google.com/store/apps/details?id=app.prolauncher) - Pro version of Olauncher with extra features like widgets, weather, folders, etc.
-
-- [Note to Self](https://play.google.com/store/apps/details?id=com.makenotetoself) - Free and [open source](https://github.com/jeerovan/ntsapp) notes app with chat like interface and end-to-end encryption.
-
-- [Pentastic](https://play.google.com/store/apps/details?id=app.pentastic) - Minimal todo lists. Free and [open source](https://github.com/tanujnotes/Pentastic).
-
-##
-
-### Help me get a new phone for testing:
-
-[<img src="https://img.buymeacoffee.com/button-api/?emoji=&slug=tanujnotes&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"
-    alt="Get it on Play Store"
-    height="80">](https://www.buymeacoffee.com/tanujnotes)
-
-Thank you!
