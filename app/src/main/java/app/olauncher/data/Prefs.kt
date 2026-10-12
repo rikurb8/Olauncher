@@ -8,6 +8,21 @@ import androidx.core.content.edit
 
 class Prefs(context: Context) {
     private val PREFS_FILENAME = "app.olauncher"
+    private val weatherPrefs = context.getSharedPreferences("weather", Context.MODE_PRIVATE)
+
+    val weatherApiKey: String get() = weatherPrefs.getString("api_key", "").orEmpty()
+    val weatherLatitude: String get() = weatherPrefs.getString("latitude", "").orEmpty()
+    val weatherLongitude: String get() = weatherPrefs.getString("longitude", "").orEmpty()
+    val weatherConfig: WeatherConfig?
+        get() = WeatherConfig.parse(weatherApiKey, weatherLatitude, weatherLongitude)
+
+    fun saveWeatherConfig(key: String, latitude: String, longitude: String) {
+        weatherPrefs.edit {
+            putString("api_key", key.trim())
+            putString("latitude", latitude.trim())
+            putString("longitude", longitude.trim())
+        }
+    }
 
     private val FIRST_OPEN = "FIRST_OPEN"
     private val FIRST_OPEN_TIME = "FIRST_OPEN_TIME"

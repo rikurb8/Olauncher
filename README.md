@@ -20,6 +20,22 @@ AF stands for Ad-Free! :D
 
 - Please check out the **[About](https://tanujnotes.substack.com/p/olauncher-minimal-af-launcher?utm_source=github)** page in the Olauncher settings for a complete list of features and **FAQs**.
 
+### Weather
+
+In Settings → Home screen → Weather, select **Configure weather** and enter a
+[weather.goodrnd.xyz](https://weather.goodrnd.xyz/docs) API key, latitude, and
+longitude (decimal degrees). The right-side display shows a Material weather icon, temperature in °C,
+rainfall in mm/h, and rain advice. It refreshes every two hours while the home
+screen is visible and hides expired advice. Long-press the widget to refresh
+immediately and restart the two-hour timer. Clear the key to disable it.
+
+Only the configured coordinates are sent to the weather service; no location
+permission is needed. The key is stored in app-private preferences, excluded
+from backup, and sent over HTTPS in the Authorization header. Weather text
+currently uses English; data is provided by FMI and MET Norway (CC BY 4.0).
+Weather icons are Google Material Symbols (Apache 2.0); see
+[third_party/material-symbols](third_party/material-symbols).
+
 ##
 
 License: [GNU GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html)

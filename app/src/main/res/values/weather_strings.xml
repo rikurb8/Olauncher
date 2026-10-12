@@ -1,0 +1,30 @@
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <!-- shortcut: English fallback only; add translations when localizing weather. -->
+    <string name="weather">Weather</string>
+    <string name="weather_configure">Configure weather</string>
+    <string name="weather_api_key">API key</string>
+    <string name="weather_latitude">Latitude (−90 to 90)</string>
+    <string name="weather_longitude">Longitude (−180 to 180)</string>
+    <string name="weather_setup_description">Enter your weather.goodrnd.xyz key and coordinates using a decimal point. These coordinates are sent to the service for weather and rain forecasts. Clear the key to hide the widget.</string>
+    <string name="weather_invalid_config">Enter a valid key and coordinates.</string>
+    <string name="weather_loading">Loading weather…</string>
+    <string name="weather_unavailable">Weather unavailable</string>
+    <string name="weather_invalid_key">Check your weather API key in Settings.</string>
+    <string name="weather_unknown_temperature">Temperature unknown</string>
+    <string name="weather_unknown_rain">Rain unknown</string>
+    <string name="weather_temperature">%1$.0f°C</string>
+    <string name="weather_rain_rate">%1$.1f mm/h</string>
+    <string name="weather_partial">Limited forecast</string>
+    <string name="weather_dry">Dry</string>
+    <string name="weather_raining">Rain now</string>
+    <string name="weather_dry_until">Dry →\n%1$s</string>
+    <string name="weather_dry_until_description">Dry until %1$s</string>
+    <string name="weather_attribution" translatable="false">FMI / MET Norway · CC BY 4.0</string>
+    <string name="weather_condition_clear">Clear sky</string>
+    <string name="weather_condition_partly_cloudy">Partly cloudy</string>
+    <string name="weather_condition_cloudy">Cloudy</string>
+    <string name="weather_condition_rain">Rain</string>
+    <string name="weather_condition_snow">Snow or sleet</string>
+    <string name="weather_condition_thunder">Thunderstorm</string>
+    <string name="weather_condition_fog">Fog or mist</string>
+</resources>

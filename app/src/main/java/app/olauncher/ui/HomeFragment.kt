@@ -8,6 +8,7 @@ import android.content.res.Configuration
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -22,6 +23,7 @@ import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.core.view.setPadding
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import app.olauncher.MainViewModel
@@ -29,6 +31,10 @@ import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.data.Weather
+import app.olauncher.data.WeatherApi
+import app.olauncher.data.WeatherApiException
+import app.olauncher.data.WeatherConfig
 import app.olauncher.databinding.FragmentHomeBinding
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.dpToPx
@@ -44,6 +50,13 @@ import app.olauncher.helper.setPlainWallpaperByTheme
 import app.olauncher.helper.showToast
 import app.olauncher.listener.OnSwipeTouchListener
 import app.olauncher.listener.ViewSwipeTouchListener
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -56,6 +69,13 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
+    private var weatherJob: Job? = null
+    private var weatherConfig: WeatherConfig? = null
+    private var weather: Weather? = null
+    private val weatherRefreshInterval = 2 * 60 * 60 * 1_000L
+    private val weatherRetryInterval = 5 * 60 * 1_000L
+    private var nextWeatherRefresh = 0L
+    private var weatherStatus = R.string.weather_loading
 
     // Swipe down starting in this top strip opens the notification drawer; below it opens the app list
     private val topSwipeThreshold by lazy { 100.dpToPx() }
@@ -83,9 +103,107 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     override fun onResume() {
         super.onResume()
         populateHomeScreen(false)
+        startWeather()
         viewModel.isOlauncherDefault()
         if (prefs.showStatusBar) showStatusBar()
         else hideStatusBar()
+    }
+
+    override fun onPause() {
+        weatherJob?.cancel()
+        weatherJob = null
+        super.onPause()
+    }
+
+    private fun startWeather() {
+        weatherJob?.cancel()
+        val config = prefs.weatherConfig
+        binding.weatherWidget.isVisible = config != null
+        val landscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        // 136dp = weatherWidget width (112dp) + its right margin (24dp); 24dp = homeAppsLayout paddingHorizontal
+        val rightPadding = if (config != null) 136 else if (landscape) 0 else 24
+        binding.homeAppsLayout.setPadding(
+            binding.homeAppsLayout.paddingLeft, binding.homeAppsLayout.paddingTop,
+            rightPadding.dpToPx(), binding.homeAppsLayout.paddingBottom,
+        )
+        if (config == null) return
+
+        if (config != weatherConfig) {
+            weatherConfig = config
+            weather = null
+            nextWeatherRefresh = 0L
+            weatherStatus = R.string.weather_loading
+        }
+        weatherJob = viewLifecycleOwner.lifecycleScope.launch {
+            while (isActive) {
+                renderWeather()
+                if (SystemClock.elapsedRealtime() >= nextWeatherRefresh) {
+                    nextWeatherRefresh = SystemClock.elapsedRealtime() + weatherRefreshInterval
+                    binding.weatherText.setText(R.string.weather_loading)
+                    binding.weatherIcon.isVisible = false
+                    try {
+                        weather = withContext(Dispatchers.IO) { WeatherApi.fetch(config) }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        val badKey = e is WeatherApiException && e.status == 401
+                        weather = null
+                        weatherStatus = if (badKey)
+                            R.string.weather_invalid_key else R.string.weather_unavailable
+                        // A bad key won't fix itself; retry other failures sooner than the 2 h refresh.
+                        if (!badKey)
+                            nextWeatherRefresh = SystemClock.elapsedRealtime() + weatherRetryInterval
+                    }
+                    renderWeather()
+                }
+                val now = System.currentTimeMillis()
+                val expiryDelay = weather?.let {
+                    listOf(it.currentValidTo, it.adviceValidTo, it.dryUntil)
+                        .map { expiry -> expiry - now }.filter { it > 0 }.minOrNull()
+                } ?: weatherRefreshInterval
+                val refreshDelay = nextWeatherRefresh - SystemClock.elapsedRealtime()
+                delay(minOf(expiryDelay, refreshDelay).coerceAtLeast(1L))
+            }
+        }
+    }
+
+    private fun renderWeather() {
+        val data = weather
+        val now = System.currentTimeMillis()
+        val icon = data?.takeIf { it.currentIsFresh(now) }?.let { weatherIcon(it.icon) }
+        binding.weatherIcon.isVisible = icon != null
+        if (icon != null) {
+            binding.weatherIcon.setImageResource(icon.first)
+            binding.weatherIcon.contentDescription = getString(icon.second)
+        }
+        val dryUntil = data?.dryDeadline(now)?.let {
+            SimpleDateFormat("EEE HH:mm", Locale.getDefault()).format(Date(it))
+        }
+        val text = if (data == null) getString(weatherStatus) else {
+            val currentFresh = data.currentIsFresh(now)
+            val temperature = data.temperature?.takeIf { currentFresh }
+                ?.let { getString(R.string.weather_temperature, it) }
+                ?: getString(R.string.weather_unknown_temperature)
+            val rain = data.rainRate?.takeIf { currentFresh }
+                ?.let { getString(R.string.weather_rain_rate, it) }
+                ?: getString(R.string.weather_unknown_rain)
+            val advice = when {
+                !data.adviceIsFresh(now) -> null
+                data.raining == true -> getString(R.string.weather_raining)
+                dryUntil != null -> getString(R.string.weather_dry_until, dryUntil)
+                data.raining == false -> getString(R.string.weather_dry)
+                else -> null
+            }
+            listOfNotNull(
+                temperature, rain, advice,
+                getString(R.string.weather_partial).takeIf { data.partial },
+            ).joinToString("\n")
+        }
+        if (binding.weatherText.text.toString() != text) binding.weatherText.text = text
+        binding.weatherText.contentDescription = if (dryUntil == null) text else text.replace(
+            getString(R.string.weather_dry_until, dryUntil),
+            getString(R.string.weather_dry_until_description, dryUntil),
+        )
     }
 
     override fun onClick(view: View) {
@@ -237,6 +355,12 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.setDefaultLauncher.setOnLongClickListener(this)
         binding.tvScreenTime.setOnClickListener(this)
         binding.tvScreenTime.setOnLongClickListener(this)
+        binding.weatherIcon.setOnLongClickListener { binding.weatherText.performLongClick() }
+        binding.weatherText.setOnLongClickListener {
+            nextWeatherRefresh = 0L
+            startWeather()
+            true
+        }
 
         // These fire only on d-pad/keyboard events; touch is consumed by ViewSwipeTouchListener
         binding.homeApp1.setOnClickListener(this)
