@@ -32,7 +32,8 @@ import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.data.Weather
-import app.olauncher.data.WeatherApi
+import app.olauncher.data.WeatherRepository
+import app.olauncher.data.WEATHER_REFRESH_INTERVAL
 import app.olauncher.data.WeatherApiException
 import app.olauncher.data.WeatherConfig
 import app.olauncher.databinding.FragmentHomeBinding
@@ -72,7 +73,6 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private var weatherJob: Job? = null
     private var weatherConfig: WeatherConfig? = null
     private var weather: Weather? = null
-    private val weatherRefreshInterval = 2 * 60 * 60 * 1_000L
     private val weatherRetryInterval = 5 * 60 * 1_000L
     private var nextWeatherRefresh = 0L
     private var weatherStatus = R.string.weather_loading
@@ -117,42 +117,50 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     private fun startWeather() {
         weatherJob?.cancel()
-        val config = prefs.weatherConfig
-        binding.weatherWidget.isVisible = config != null
-        val landscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        // 136dp = weatherWidget width (112dp) + its right margin (24dp); 24dp = homeAppsLayout paddingHorizontal
-        val rightPadding = if (config != null) 136 else if (landscape) 0 else 24
-        binding.homeAppsLayout.setPadding(
-            binding.homeAppsLayout.paddingLeft, binding.homeAppsLayout.paddingTop,
-            rightPadding.dpToPx(), binding.homeAppsLayout.paddingBottom,
-        )
-        if (config == null) return
-
-        if (config != weatherConfig) {
-            weatherConfig = config
-            weather = null
-            nextWeatherRefresh = 0L
-            weatherStatus = R.string.weather_loading
-        }
+        val context = requireContext().applicationContext
         weatherJob = viewLifecycleOwner.lifecycleScope.launch {
+            val config = withContext(Dispatchers.IO) { prefs.weatherConfig }
+            binding.weatherWidget.isVisible = config != null
+            val landscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+            // 136dp = weatherWidget width (112dp) + its right margin (24dp); 24dp = homeAppsLayout paddingHorizontal
+            val rightPadding = if (config != null) 136 else if (landscape) 0 else 24
+            binding.homeAppsLayout.setPadding(
+                binding.homeAppsLayout.paddingLeft, binding.homeAppsLayout.paddingTop,
+                rightPadding.dpToPx(), binding.homeAppsLayout.paddingBottom,
+            )
+            if (config == null) return@launch
+            val repository = withContext(Dispatchers.IO) { WeatherRepository(context.noBackupFilesDir) }
+            if (config != weatherConfig) {
+                weatherConfig = config
+                weather = null
+                nextWeatherRefresh = 0L
+                weatherStatus = R.string.weather_loading
+                val cached = repository.load(config)
+                if (cached != null) {
+                    weather = cached.weather
+                    nextWeatherRefresh = SystemClock.elapsedRealtime() +
+                        cached.refreshDelay(System.currentTimeMillis())
+                }
+            }
             while (isActive) {
                 renderWeather()
                 if (SystemClock.elapsedRealtime() >= nextWeatherRefresh) {
-                    nextWeatherRefresh = SystemClock.elapsedRealtime() + weatherRefreshInterval
-                    binding.weatherText.setText(R.string.weather_loading)
-                    binding.weatherIcon.isVisible = false
                     try {
-                        weather = withContext(Dispatchers.IO) { WeatherApi.fetch(config) }
+                        val reading = repository.fetch(config)
+                        weather = reading.weather
+                        val refreshDelay = reading.refreshDelay(System.currentTimeMillis())
+                        // Already-expired API data must not cause a tight request loop.
+                        nextWeatherRefresh = SystemClock.elapsedRealtime() +
+                            if (refreshDelay > 0) refreshDelay else weatherRetryInterval
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
                         val badKey = e is WeatherApiException && e.status == 401
-                        weather = null
                         weatherStatus = if (badKey)
                             R.string.weather_invalid_key else R.string.weather_unavailable
-                        // A bad key won't fix itself; retry other failures sooner than the 2 h refresh.
-                        if (!badKey)
-                            nextWeatherRefresh = SystemClock.elapsedRealtime() + weatherRetryInterval
+                        // Keep any still-valid readings when a refresh fails.
+                        nextWeatherRefresh = SystemClock.elapsedRealtime() +
+                            if (badKey) WEATHER_REFRESH_INTERVAL else weatherRetryInterval
                     }
                     renderWeather()
                 }
@@ -160,7 +168,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 val expiryDelay = weather?.let {
                     listOf(it.currentValidTo, it.adviceValidTo, it.dryUntil)
                         .map { expiry -> expiry - now }.filter { it > 0 }.minOrNull()
-                } ?: weatherRefreshInterval
+                } ?: WEATHER_REFRESH_INTERVAL
                 val refreshDelay = nextWeatherRefresh - SystemClock.elapsedRealtime()
                 delay(minOf(expiryDelay, refreshDelay).coerceAtLeast(1L))
             }
