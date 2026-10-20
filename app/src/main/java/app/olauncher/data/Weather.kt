@@ -72,7 +72,7 @@ data class Weather(
 class WeatherApiException(val status: Int) : IOException("Weather HTTP $status")
 
 object WeatherApi {
-    fun fetch(config: WeatherConfig): Weather {
+    fun fetchJson(config: WeatherConfig): JSONObject {
         val zone = URLEncoder.encode(TimeZone.getDefault().id, "UTF-8")
         val connection = URL(
             "https://weather.goodrnd.xyz/v1/weather?lat=${config.latitude}&lon=${config.longitude}&tz=$zone"
@@ -85,7 +85,7 @@ object WeatherApi {
             connection.setRequestProperty("Accept", "application/json")
             val status = connection.responseCode
             if (status != HttpURLConnection.HTTP_OK) throw WeatherApiException(status)
-            return connection.inputStream.bufferedReader().use { Weather.parse(JSONObject(it.readText())) }
+            return connection.inputStream.bufferedReader().use { JSONObject(it.readText()) }
         } finally {
             connection.disconnect()
         }
